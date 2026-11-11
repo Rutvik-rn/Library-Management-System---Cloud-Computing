@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: lms_kiel
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+# FastAPI at default port - lms = library management system 
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: lms_api
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_DB: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      API_USER: ${API_USER}
+      API_PASSWORD_HASH: ${API_PASSWORD_HASH}
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES : ${ACCESS_TOKEN_EXPIRE_MINUTES}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+  
+# Streamlit Dashboard for our library management system 
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: lms_dashboard
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    restart: unless-stopped
